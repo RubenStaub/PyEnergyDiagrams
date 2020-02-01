@@ -40,6 +40,7 @@ class ED:
         self.links = []
         self.arrows = []
         self.electons_boxes = []
+        self.reaction_steps_labels = []
         # matplotlib fiugre handlers
         self.fig = None
         self.ax = None
@@ -171,6 +172,24 @@ class ED:
         y = self.energies[level_id]
         self.electons_boxes.append((x, y, boxes, electrons, side, spacing_f))
 
+    def set_steps_labels(self, reaction_steps_labels):
+        '''
+        Method of ED class
+        Set custom reaction steps labels for each defined position in the plot.
+
+        Parameters
+        ----------
+        reaction_steps_labels : array or dict
+                 Labels for defined position on the graph.
+                 The label for position i (defined as >= 1) is taken as
+                 reaction_steps_labels[i-1], if defined.
+
+        Returns
+        -------
+        Update self.xticks_labels
+
+        '''
+        self.reaction_steps_labels = reaction_steps_labels
 
     def plot(self, show_IDs=False):
         '''
@@ -203,6 +222,29 @@ class ED:
         ax.spines['bottom'].set_visible(False)
 
         self.__auto_adjust()
+
+        # Set reaction steps labels if requested
+        if self.reaction_steps_labels:
+            xticks_positions = []
+            xticks_labels = []
+            # Search for defined labels
+            for position in set(self.positions):
+                # Retrieve associated label
+                try:
+                    position_label = self.reaction_steps_labels[position-1]
+                except IndexError:
+                    continue
+                # Compute x-coordinates of reaction step position
+                start = position*(self.dimension+self.space)
+                xticks_positions.append(start + self.dimension/2.)
+                # Add reaction step label
+                xticks_labels.append(position_label)
+            # Set defined labels
+            if xticks_labels:
+                ax.axes.get_xaxis().set_visible(True)
+                ax.spines['bottom'].set_visible(True)
+                ax.set_xticks(xticks_positions)
+                ax.set_xticklabels(xticks_labels)
 
         data = zip(self.energies,  # 0
                    self.positions,  # 1
@@ -333,6 +375,7 @@ if __name__ == '__main__':
         a.add_link(3,5)
         a.add_link(0,6)
         a.add_electronbox(2,3,5,3,3)
+        a.set_steps_labels(['Reactants', '', 'Rate determining step', ''])
         #a.add_arrow(2,1)
         #a.offset *= 2
         a.plot(show_IDs=True)
